@@ -51,47 +51,76 @@ class ServicoTransferenciaTest {
     // ---------------------------------------------------------------
 
     @Test
-    @Disabled("N2-A")
     void transferenciaAcimaDe1000PagaTarifaDe1Porcento() {
+        StatusTransferencia status = servico.transferir(origem, destino, 2000.0);
+
+        assertEquals(StatusTransferencia.OK, status);
+        boolean tarifa = servico.calcularTarifa(2000.0) == 20.0;
+        assertTrue(tarifa);
+        assertEquals(7980.0, origem.getSaldo(), DELTA);
+        assertEquals(2000.0, destino.getSaldo(), DELTA);
         // DADO   origem com 10.000 e destino com 0
         // QUANDO transfere 2.000
-        // ENTÃO  status = ?  | calcularTarifa(2000) = ?  | saldo da origem = ?  | saldo do destino = ?
+        // ENTÃO  status = ? OK  | calcularTarifa(2000) = ? 20 | saldo da origem = ? 7980 (10000 - 2000 - 20) | saldo do destino = ? 2000
         //        (calcule os valores esperados na mão ANTES de rodar!)
-        fail("Escreva o teste N2-A");
+
     }
 
     @Test
-    @Disabled("N2-B")
     void transferenciaDeExatamente1000NaoPagaTarifa() {
+        StatusTransferencia status = servico.transferir(origem, destino, 1000.0);
+
+        assertEquals(StatusTransferencia.OK, status);
+        boolean tarifa = servico.calcularTarifa(1000.0) == 0.0;
+        assertTrue(tarifa);
+        assertEquals(9000.0, origem.getSaldo(), DELTA);
+        assertEquals(1000.0, destino.getSaldo(), DELTA);
         // Valor-limite da regra R4: "ACIMA de 1.000" ... e 1.000 exatos?
         // Verifique o status, a tarifa e os saldos.
-        fail("Escreva o teste N2-B");
+
     }
 
     @Test
-    @Disabled("N2-C")
     void transferenciaAcimaDoLimiteDeveSerRecusada() {
-        // Qual status? Qual o valor mínimo que ultrapassa o limite (R3)?
-        // E um teste com EXATAMENTE o limite: o que deveria acontecer?
+        StatusTransferencia status = servico.transferir(origem, destino, 5000.01);
+
+        assertEquals(StatusTransferencia.ACIMA_DO_LIMITE, status);
+        assertEquals(10_000.0, origem.getSaldo(), DELTA);
+        assertEquals(0.0, destino.getSaldo(), DELTA);
+        // Qual status? ACIMA_DO_LIMITE Qual o valor mínimo que ultrapassa o limite (R3)? 5000,01
+        // E um teste com EXATAMENTE o limite: o que deveria acontecer? DEVERIA TER STATUS OK E REALIZAR A TRANSFERÊNCIA
         // Verifique também que nenhuma conta foi alterada.
-        fail("Escreva o teste N2-C");
+
     }
 
     @Test
-    @Disabled("N2-D")
     void saldoInsuficienteParaValorMaisTarifaNaoAlteraNenhumaConta() {
+        Conta origem2k = new Conta("Origem2k", 2000.0);
+        StatusTransferencia status = servico.transferir(origem2k, destino, 2000.0);
+
+        assertEquals(StatusTransferencia.SALDO_INSUFICIENTE, status);
+        assertEquals(2_000.0, origem2k.getSaldo(), DELTA);
+        assertEquals(0.0, destino.getSaldo(), DELTA);
         // DICA: crie uma conta de origem com saldo suficiente para o VALOR,
         //       mas NÃO suficiente para VALOR + TARIFA (ex.: saldo 2.000, valor 2.000).
         // Verifique o status e que origem E destino mantêm os saldos originais.
-        fail("Escreva o teste N2-D");
     }
 
     @Test
-    @Disabled("N2-E")
     void mesmaContaEValorInvalidoDevemSerRecusados() {
+        StatusTransferencia status = servico.transferir(origem, origem, 0.0);
+
+        assertEquals(StatusTransferencia.MESMA_CONTA, status);
+        assertEquals(10_000.0, origem.getSaldo(), DELTA);
+        assertEquals(0.0, destino.getSaldo(), DELTA);
+
+        StatusTransferencia statusNegativo = servico.transferir(origem, destino, -100.0);
+
+        assertEquals(StatusTransferencia.VALOR_INVALIDO, statusNegativo);
+        assertEquals(10_000.0, origem.getSaldo(), DELTA);
+        assertEquals(0.0, destino.getSaldo(), DELTA);
         // Cubra R1 (mesma conta) e R2 (valor zero e valor negativo).
-        // Quantos testes/asserts você precisa para exercitar os DOIS lados de cada "if"?
+        // Quantos testes/asserts você precisa para exercitar os DOIS lados de cada "if"?     UM PARA CADA
         // Em todos os casos, confira o status E que os saldos não mudaram.
-        fail("Escreva o teste N2-E");
     }
 }
